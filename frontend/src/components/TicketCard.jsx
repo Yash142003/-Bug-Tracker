@@ -1,6 +1,6 @@
 export default function TicketCard({ ticket }) {
   return (
-    <div className="bg-white p-3 rounded-md shadow">
+    <div className="bg-white p-3 rounded-md shadow cursor-grab active:cursor-grabbing">
       <h4 className="font-bold text-gray-800 text-sm">{ticket.title}</h4>
 
       <p className="text-xs text-gray-500 mt-1">
@@ -10,12 +10,6 @@ export default function TicketCard({ ticket }) {
       <p className="text-xs text-gray-500">
         Status: <span className="font-semibold">{ticket.status}</span>
       </p>
-
-      {ticket.assignee?.name && (
-        <p className="text-xs text-gray-500 mt-1">
-          Assignee: <span className="font-semibold">{ticket.assignee.name}</span>
-        </p>
-      )}
     </div>
   );
 }

@@ -6,26 +6,35 @@ import { toast } from "react-toastify";
 const columns = ["To Do", "In Progress", "Done"];
 
 export default function KanbanBoard({ tickets, setTickets }) {
-  const grouped = {};
-  columns.forEach((c) => (grouped[c] = []));
-  tickets.forEach((t) => grouped[t.status]?.push(t));
+  const grouped = { "To Do": [], "In Progress": [], "Done": [] };
+
+  tickets.forEach((t) => {
+    const status = t.status || "To Do";
+    if (!grouped[status]) grouped[status] = [];
+    grouped[status].push(t);
+  });
 
   const onDragEnd = async (result) => {
-    if (!result.destination) return;
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
 
-    const ticketId = result.draggableId;
-    const newStatus = result.destination.droppableId;
+    const fromCol = source.droppableId;
+    const toCol = destination.droppableId;
 
-    // update UI first
-    const updated = tickets.map((t) =>
-      t._id === ticketId ? { ...t, status: newStatus } : t
+    if (fromCol === toCol && source.index === destination.index) return;
+
+    const ticketId = String(draggableId);
+
+    const updatedTickets = tickets.map((t) =>
+      String(t._id) === ticketId ? { ...t, status: toCol } : t
     );
-    setTickets(updated);
+    setTickets(updatedTickets);
 
     try {
-      await API.put(`/tickets/${ticketId}/status`, { status: newStatus });
+      await API.put(`/tickets/${ticketId}/status`, { status: toCol });
     } catch (err) {
       toast.error("Failed to update status");
+      setTickets(tickets); // rollback
     }
   };
 
@@ -34,30 +43,52 @@ export default function KanbanBoard({ tickets, setTickets }) {
       <div className="grid md:grid-cols-3 gap-4">
         {columns.map((col) => (
           <Droppable droppableId={col} key={col}>
-            {(provided) => (
+            {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className="bg-white/20 backdrop-blur-md p-4 rounded-lg min-h-[450px]"
+                className={`p-4 rounded-lg min-h-[450px] transition border border-white/20 
+                  ${snapshot.isDraggingOver ? "bg-white/25" : "bg-white/15"}`}
+                style={{
+                  // IMPORTANT: prevent blur/filter stacking context problems
+                  position: "relative",
+                  overflow: "visible",
+                }}
               >
                 <h3 className="text-white font-bold mb-3">{col}</h3>
 
                 <div className="space-y-3">
                   {grouped[col].map((ticket, index) => (
                     <Draggable
-                      key={ticket._id}
-                      draggableId={ticket._id}
+                      key={String(ticket._id)}
+                      draggableId={String(ticket._id)}
                       index={index}
                     >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                        >
-                          <TicketCard ticket={ticket} />
-                        </div>
-                      )}
+                      {(provided, snapshot) => {
+                        const style = {
+                          ...provided.draggableProps.style,
+
+                          // ✅ This fixes the "go behind other columns" issue
+                          zIndex: snapshot.isDragging ? 9999 : "auto",
+
+                          // ✅ Keeps it above everything
+                          position: snapshot.isDragging ? "relative" : "relative",
+                        };
+
+                        return (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={style}
+                            className={`rounded-md ${
+                              snapshot.isDragging ? "shadow-2xl scale-[1.02]" : ""
+                            }`}
+                          >
+                            <TicketCard ticket={ticket} />
+                          </div>
+                        );
+                      }}
                     </Draggable>
                   ))}
                 </div>
