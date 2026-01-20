@@ -16,14 +16,11 @@ export default function App() {
       <ToastContainer position="top-right" />
 
       <Routes>
-        {/* Default */}
         <Route path="/" element={<Navigate to="/login" />} />
 
-        {/* Auth */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* Protected */}
         <Route
           path="/user/dashboard"
           element={
