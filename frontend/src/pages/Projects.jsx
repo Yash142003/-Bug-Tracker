@@ -18,7 +18,7 @@ export default function Projects() {
       setLoading(true);
       const { data } = await API.get("/projects");
       setProjects(data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load projects");
     } finally {
       setLoading(false);
@@ -34,7 +34,7 @@ export default function Projects() {
       toast.success("Project created!");
       setForm({ title: "", description: "" });
       fetchProjects();
-    } catch (err) {
+    } catch {
       toast.error("Project creation failed");
     }
   };
@@ -45,37 +45,43 @@ export default function Projects() {
 
   return (
     <DashboardLayout>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Create Project</h2>
+      {/* Create project */}
+      <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+        <h2 className="text-xl font-extrabold text-slate-900 mb-4">
+          Create Project
+        </h2>
 
         <form onSubmit={createProject} className="grid gap-3">
           <input
-            className="border p-2 rounded-md"
+            className="border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-600"
             placeholder="Project Title"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
 
           <textarea
-            className="border p-2 rounded-md"
+            className="border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-600"
             placeholder="Project Description"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
 
-          <button className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-md">
-            Create
+          <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow shadow-indigo-600/20">
+            Create Project
           </button>
         </form>
       </div>
 
+      {/* Projects list */}
       <div className="mt-6">
-        <h2 className="text-xl font-bold text-white mb-3">Your Projects</h2>
+        <h2 className="text-xl font-extrabold text-slate-900 mb-3">
+          Your Projects
+        </h2>
 
         {loading ? (
-          <div className="text-white">Loading...</div>
+          <div className="text-slate-700">Loading...</div>
         ) : projects.length === 0 ? (
-          <div className="text-white">No projects found.</div>
+          <div className="text-slate-600">No projects found.</div>
         ) : (
           <div className="grid md:grid-cols-3 gap-4">
             {projects.map((p) => (

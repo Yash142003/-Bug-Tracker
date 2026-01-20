@@ -10,21 +10,17 @@ export default function KanbanBoard({ tickets, setTickets }) {
 
   tickets.forEach((t) => {
     const status = t.status || "To Do";
-    if (!grouped[status]) grouped[status] = [];
-    grouped[status].push(t);
+    grouped[status]?.push(t);
   });
 
   const onDragEnd = async (result) => {
     const { source, destination, draggableId } = result;
     if (!destination) return;
 
-    const fromCol = source.droppableId;
     const toCol = destination.droppableId;
-
-    if (fromCol === toCol && source.index === destination.index) return;
-
     const ticketId = String(draggableId);
 
+    // update UI
     const updatedTickets = tickets.map((t) =>
       String(t._id) === ticketId ? { ...t, status: toCol } : t
     );
@@ -32,9 +28,9 @@ export default function KanbanBoard({ tickets, setTickets }) {
 
     try {
       await API.put(`/tickets/${ticketId}/status`, { status: toCol });
-    } catch (err) {
+    } catch {
       toast.error("Failed to update status");
-      setTickets(tickets); // rollback
+      setTickets(tickets);
     }
   };
 
@@ -47,15 +43,10 @@ export default function KanbanBoard({ tickets, setTickets }) {
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className={`p-4 rounded-lg min-h-[450px] transition border border-white/20 
-                  ${snapshot.isDraggingOver ? "bg-white/25" : "bg-white/15"}`}
-                style={{
-                  // IMPORTANT: prevent blur/filter stacking context problems
-                  position: "relative",
-                  overflow: "visible",
-                }}
+                className={`p-4 rounded-2xl border border-slate-200 bg-white shadow-sm min-h-[500px]
+                  ${snapshot.isDraggingOver ? "ring-2 ring-indigo-500" : ""}`}
               >
-                <h3 className="text-white font-bold mb-3">{col}</h3>
+                <h3 className="font-extrabold text-slate-900 mb-4">{col}</h3>
 
                 <div className="space-y-3">
                   {grouped[col].map((ticket, index) => (
@@ -64,31 +55,20 @@ export default function KanbanBoard({ tickets, setTickets }) {
                       draggableId={String(ticket._id)}
                       index={index}
                     >
-                      {(provided, snapshot) => {
-                        const style = {
-                          ...provided.draggableProps.style,
-
-                          // ✅ This fixes the "go behind other columns" issue
-                          zIndex: snapshot.isDragging ? 9999 : "auto",
-
-                          // ✅ Keeps it above everything
-                          position: snapshot.isDragging ? "relative" : "relative",
-                        };
-
-                        return (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            style={style}
-                            className={`rounded-md ${
-                              snapshot.isDragging ? "shadow-2xl scale-[1.02]" : ""
-                            }`}
-                          >
-                            <TicketCard ticket={ticket} />
-                          </div>
-                        );
-                      }}
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          style={{
+                            ...provided.draggableProps.style,
+                            zIndex: snapshot.isDragging ? 9999 : "auto",
+                          }}
+                          className={snapshot.isDragging ? "opacity-90" : ""}
+                        >
+                          <TicketCard ticket={ticket} />
+                        </div>
+                      )}
                     </Draggable>
                   ))}
                 </div>
